@@ -1,0 +1,9 @@
+# Tên ?ng d?ng
+spring:
+  application:
+    name: ecommerce-api
+
+# C?ng port
+server:
+  port: 9090
+
