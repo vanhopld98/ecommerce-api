@@ -1,11 +1,16 @@
 package vn.com.ecommerceapi.service.impl;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import lombok.RequiredArgsConstructor;
 import org.keycloak.adapters.springboot.KeycloakSpringBootProperties;
 import org.keycloak.admin.client.CreatedResponseUtil;
+import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.UserResource;
+import org.keycloak.representations.AccessTokenResponse;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
+import org.keycloak.representations.idm.UserSessionRepresentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -13,21 +18,28 @@ import vn.com.ecommerceapi.constant.Constant;
 import vn.com.ecommerceapi.entity.UserProfile;
 import vn.com.ecommerceapi.entity.UserProfileOTP;
 import vn.com.ecommerceapi.enums.OTPTypeEnum;
+import vn.com.ecommerceapi.exception.AuthenticationException;
 import vn.com.ecommerceapi.exception.BusinessException;
+import vn.com.ecommerceapi.mapper.AuthenticationMapper;
 import vn.com.ecommerceapi.model.request.LoginRequest;
 import vn.com.ecommerceapi.model.request.RegisterRequest;
 import vn.com.ecommerceapi.model.response.LoginResponse;
+import vn.com.ecommerceapi.model.response.RolesUserResponse;
+import vn.com.ecommerceapi.redis.TokenRedisService;
 import vn.com.ecommerceapi.repositories.UserProfileOTPRepository;
 import vn.com.ecommerceapi.repositories.UserProfileRepository;
 import vn.com.ecommerceapi.service.AuthenticationService;
 import vn.com.ecommerceapi.service.KeycloakService;
 import vn.com.ecommerceapi.service.UserProfileService;
+import vn.com.ecommerceapi.utils.JWTUtils;
 import vn.com.ecommerceapi.utils.PasswordUtils;
 import vn.com.ecommerceapi.utils.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -43,10 +55,58 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final KeycloakSpringBootProperties keycloakSpringBootProperties;
     private final KeycloakService keycloakService;
     private final UserProfileRepository userProfileRepository;
+    private final TokenRedisService tokenRedisService;
+    private final AuthenticationMapper authenticationMapper;
 
     @Override
-    public LoginResponse login(LoginRequest loginRequest) {
-        return null;
+    public LoginResponse login(LoginRequest request) {
+        /* Validate username password request */
+        if (StringUtils.isNullOrEmpty(request.getUsername()) || StringUtils.isNullOrEmpty(request.getPassword())) {
+            throw new BusinessException("Tài khoản hoặc mật khẩu không được để trống");
+        }
+
+        String username = request.getUsername();
+
+        /* Tìm kiếm trong DB xem có tồn tại username này không */
+        UserProfile userProfile = userProfileService.findUserProfileByUsername(username);
+        LOGGER.info("[AUTHENTICATION][{}][LOGIN] User Profile: {}", username, userProfile);
+
+        if (Objects.isNull(userProfile)) {
+            throw new BusinessException("Username không tồn tại");
+        }
+
+        if (Boolean.FALSE.equals(userProfile.getIsActive())) {
+            throw new BusinessException("Tài khoản của bạn đã bị khoá. Vui lòng liên hệ quản trị viên để được hỗ trợ");
+        }
+
+        /* So sánh 2 password xem có trùng nhau hay không */
+        if (StringUtils.notEquals(userProfile.getPassword(), PasswordUtils.endCodeMD5(request.getPassword()))) {
+            throw new BusinessException("Sai tên tài khoản hoặc mật khẩu. Vui lòng thử lại.");
+        }
+
+        /* Logout tài khoản hiện tại */
+        logout(username);
+
+        Keycloak keyCloak = keycloakService.getKeycloak(username, request.getPassword());
+
+        AccessTokenResponse accessTokenKeycloak = keyCloak.tokenManager().getAccessToken();
+
+        DecodedJWT jwtDecode = JWT.decode(accessTokenKeycloak.getToken());
+        List<String> roles = jwtDecode.getClaim("realm_access").as(RolesUserResponse.class).getRoles().stream().filter(role -> role.startsWith("ROLE")).collect(Collectors.toList());
+        LOGGER.info("[AUTHENTICATION][{}][LOGIN] Roles: {}", username, roles);
+
+        if (roles.isEmpty()) {
+            throw new AuthenticationException("Bạn không có quyền truy cập chức năng này. Vui lòng đăng nhập lại", 403);
+        }
+
+        LOGGER.info("[AUTHENTICATION][{}][LOGIN] Login Success", username);
+
+        Date expiredTimeToken = JWTUtils.getExpiredTime(accessTokenKeycloak.getToken());
+
+        /* Lưu token vào redis theo thời gian hết hạn token */
+        tokenRedisService.set(username, accessTokenKeycloak.getToken(), expiredTimeToken);
+
+        return authenticationMapper.mapToLoginResponse(accessTokenKeycloak, roles);
     }
 
     @Override
@@ -147,7 +207,26 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public void logout(String username) {
-        // do nothing
+        LOGGER.info("[AUTHENTICATION][{}][LOGOUT] Starting.....", username);
+
+        if (StringUtils.isNullOrEmpty(username)) {
+            return;
+        }
+        String keycloakId = userProfileRepository.getKeycloakIdByUsername(username);
+        LOGGER.info("[AUTHENTICATION][{}][LOGOUT] Keycloak ID: {}", username, keycloakId);
+
+        Keycloak keycloak = keycloakService.getKeycloakByClient();
+        UserResource usersResource = keycloak.realm(keycloakSpringBootProperties.getRealm()).users().get(keycloakId);
+        List<UserSessionRepresentation> userSessions = usersResource.getUserSessions();
+
+        if (!userSessions.isEmpty()) {
+            usersResource.logout();
+        }
+
+        /* Xoá key ở redis */
+        tokenRedisService.remove(username);
+
+        LOGGER.info("[AUTHENTICATION][{}][LOGOUT] Logout Success", username);
     }
 
     private void saveUserProfile(RegisterRequest request, String keycloakId, String username) {

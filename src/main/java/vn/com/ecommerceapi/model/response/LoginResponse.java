@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Data
@@ -38,10 +39,8 @@ public class LoginResponse {
     @JsonProperty("notBeforePolicy")
     private int notBeforePolicy;
 
-    @JsonProperty("sessionState")
-    private String sessionState;
-
-    private Map<String, Object> otherClaims = new HashMap<>();
+    @JsonProperty("sessionId")
+    private String sessionId;
 
     @JsonProperty("scope")
     private String scope;
@@ -55,4 +54,6 @@ public class LoginResponse {
     @JsonProperty("errorUri")
     private String errorUri;
 
+    @JsonProperty("roles")
+    private List<String> roles;
 }
