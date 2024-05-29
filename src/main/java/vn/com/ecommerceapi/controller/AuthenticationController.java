@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import vn.com.ecommerceapi.aop.Secured;
+import vn.com.ecommerceapi.enums.RoleEnum;
 import vn.com.ecommerceapi.model.request.LoginRequest;
 import vn.com.ecommerceapi.model.request.LogoutRequest;
 import vn.com.ecommerceapi.model.request.RegisterRequest;
@@ -24,7 +25,6 @@ public class AuthenticationController {
 
     private final AuthenticationService authenticationService;
 
-    @Secured()
     @PostMapping("/register")
     public ResponseEntity<LoginResponse> register(@RequestBody RegisterRequest request) {
         LOGGER.info("[AUTHENTICATION][{}][REGISTER][STARTING...] Request: {}", request.getUsername(), request);
@@ -38,9 +38,10 @@ public class AuthenticationController {
     }
 
     @PostMapping("/logout")
-    public void logout(@RequestBody LogoutRequest request) {
+    public ResponseEntity<Void> logout(@RequestBody LogoutRequest request) {
         LOGGER.info("[AUTHENTICATION][{}][LOGOUT][STARTING...] Request: {}", request.getUsername(), request);
         authenticationService.logout(request.getUsername());
+        return ResponseEntity.ok().build();
     }
 
 }

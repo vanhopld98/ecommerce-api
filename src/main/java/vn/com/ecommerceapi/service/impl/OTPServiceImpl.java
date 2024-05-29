@@ -52,6 +52,7 @@ public class OTPServiceImpl implements OTPService {
         if (StringUtils.isNullOrEmpty(request.getUsername())) {
             throw new BusinessException("Username không được để trống");
         }
+
         String username = request.getUsername();
 
         /* Nếu tồn tại thông tin user thì dừng luồng */
@@ -65,25 +66,34 @@ public class OTPServiceImpl implements OTPService {
 
         }
 
-        MimeMessage message = mailSender.createMimeMessage();
 
-        var otp = generateOTP();
-        LOGGER.info("[OTP][{}] Tạo otp: {}", username, otp);
+        String otp = generateOTP();
+        LOGGER.info("[OTP][{}][SEND OTP] Mã OTP: {}", username, otp);
 
+        /* Gửi Email đến người dùng */
+        sendEmail(request, username, otp);
+
+        /* Lưu thông tin OTP để verify */
+        saveUserProfileOTP(request, otp);
+    }
+
+    private void sendEmail(SendOTPRequest request, String username, String otp) {
         try {
+            MimeMessage message = mailSender.createMimeMessage();
             message.setFrom(new InternetAddress(usernameEmail));
-
-            /* */
             message.setRecipients(Message.RecipientType.TO, request.getEmail());
             message.setSubject(SUBJECT);
             message.setContent(String.format(CONTENT, request.getUsername(), otp), "text/html; charset=utf-8");
 
             mailSender.send(message);
         } catch (MessagingException e) {
-            throw new BusinessException(e.getMessage());
+            LOGGER.error("[OTP][{}][SEND OTP] Có lỗi khi gửi Email. Exception: {}", username, e.getMessage());
+            throw new BusinessException(Constant.EXCEPTION_MESSAGE_DEFAULT);
         }
+    }
 
-        var userProfileOtp = new UserProfileOTP();
+    private void saveUserProfileOTP(SendOTPRequest request, String otp) {
+        UserProfileOTP userProfileOtp = new UserProfileOTP();
         userProfileOtp.setOtp(otp);
         userProfileOtp.setUsername(request.getUsername());
         userProfileOtp.setType(StringUtils.isNullOrEmpty(request.getType()) ? OTPTypeEnum.REGISTER.name() : request.getType());
