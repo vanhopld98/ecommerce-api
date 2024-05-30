@@ -5,15 +5,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import vn.com.ecommerceapi.service.PaymentService;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/payment")
-public class PaymentController {
+@RequestMapping("/api/product")
+public class ProductController {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PaymentController.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProductController.class);
 
-    private final PaymentService paymentService;
 
 }

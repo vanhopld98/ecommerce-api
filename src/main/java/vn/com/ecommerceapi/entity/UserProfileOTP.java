@@ -35,4 +35,7 @@ public class UserProfileOTP extends BaseEntity {
     @Column(name = "last_verify_at")
     private LocalDateTime lastVerifyAt;
 
+    @Column(name = "is_verified")
+    private Boolean isVerified;
+
 }

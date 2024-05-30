@@ -33,16 +33,16 @@ spring:
             enabled: true
 
 keycloak:
-  realm: authentication
-  auth-server-url: https://hopnv.xyz
-  resource: authentication
+  realm: ecommerce
+  auth-server-url: http://localhost:8080
+  resource: ecommerce
   ssl-required: none
   principal-attribute: preferred_username
   use-resource-role-mappings: true
   bearer-only: true
   cors: true
   credentials:
-    secret: yLs5lrt7qPqzkaDzkS6vYDlyguKKR2LW
+    secret: ocS8fPxNDZoDfc3sYQmmijtNPAwoZ2X7
   public-client: true
 
 redis:

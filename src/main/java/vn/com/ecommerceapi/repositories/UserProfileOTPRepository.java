@@ -15,6 +15,7 @@ public interface UserProfileOTPRepository extends JpaRepository<UserProfileOTP, 
 
     @Transactional
     @Modifying
-    @Query(value = " update user_profile_otp set status = false where username =:username and type =:type ", nativeQuery = true)
+    @Query(value = "update user_profile_otp set status = false where username =:username and type =:type ", nativeQuery = true)
     void inactiveAllStatus(String username, String type);
+
 }

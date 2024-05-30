@@ -13,7 +13,7 @@ import vn.com.ecommerceapi.service.OTPService;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/otp")
+@RequestMapping("/api/otp")
 public class OTPController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OTPController.class);

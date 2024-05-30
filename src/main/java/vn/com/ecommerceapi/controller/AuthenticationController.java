@@ -8,8 +8,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import vn.com.ecommerceapi.aop.Secured;
-import vn.com.ecommerceapi.enums.RoleEnum;
 import vn.com.ecommerceapi.model.request.LoginRequest;
 import vn.com.ecommerceapi.model.request.LogoutRequest;
 import vn.com.ecommerceapi.model.request.RegisterRequest;

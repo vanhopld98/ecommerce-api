@@ -7,6 +7,7 @@ import org.keycloak.adapters.springboot.KeycloakSpringBootProperties;
 import org.keycloak.admin.client.CreatedResponseUtil;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.UserResource;
+import org.keycloak.admin.client.resource.UsersResource;
 import org.keycloak.representations.AccessTokenResponse;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
@@ -35,6 +36,7 @@ import vn.com.ecommerceapi.utils.JWTUtils;
 import vn.com.ecommerceapi.utils.PasswordUtils;
 import vn.com.ecommerceapi.utils.StringUtils;
 
+import javax.ws.rs.core.Response;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
@@ -139,34 +141,23 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
 
         /* Kiểm tra xem có trùng otp hay không */
-        if (StringUtils.notEquals(userProfileOTP.getOtp(), request.getOtp())) {
-            userProfileOTP.setCountVerifyFalse(countVerifyFail + 1);
-            userProfileOTP.setLastVerifyAt(LocalDateTime.now());
-            userProfileOTPRepository.save(userProfileOTP);
-            throw new BusinessException(Constant.OTP_EXPIRED_OR_INVALID_MES);
-        }
+        saveUserProfileOTP(request, userProfileOTP, countVerifyFail);
 
-        UserRepresentation userRepresentation = new UserRepresentation();
-        userRepresentation.setEnabled(true);
-        userRepresentation.setUsername(request.getUsername());
-        userRepresentation.setFirstName(request.getFirstName());
-        userRepresentation.setLastName(request.getLastName());
-        userRepresentation.setEmail(request.getEmail());
-        userRepresentation.setEmailVerified(true);
+        UserRepresentation userRepresentation = buildUserRepresentation(request);
         LOGGER.info("[AUTHENTICATION][{}][REGISTER][USER_REPRESENTATION][{}]", username, userRepresentation);
 
         /* Lấy keycloak */
-        var keycloakInstance = keycloakService.getKeycloakByClient();
+        Keycloak keycloakInstance = keycloakService.getKeycloakByClient();
         LOGGER.info("[AUTHENTICATION][{}][REGISTER][KEYCLOAK_INSTANCE][{}]", username, keycloakInstance);
 
-        var usersResource = keycloakInstance.realm(keycloakSpringBootProperties.getRealm()).users();
+        UsersResource usersResource = keycloakInstance.realm(keycloakSpringBootProperties.getRealm()).users();
         LOGGER.info("[AUTHENTICATION][{}][REGISTER][USER_RESOURCE][{}]", username, usersResource);
 
-        try (var userCreateResponse = usersResource.create(userRepresentation)) {
+        try (Response userCreateResponse = usersResource.create(userRepresentation)) {
             LOGGER.info("[AUTHENTICATION][{}][REGISTER][USER_CREATE_RESPONSE][{}]", username, userCreateResponse);
 
             if (userCreateResponse.getStatus() == 201) {
-                var keycloakId = CreatedResponseUtil.getCreatedId(userCreateResponse);
+                String keycloakId = CreatedResponseUtil.getCreatedId(userCreateResponse);
                 LOGGER.info("[AUTHENTICATION][{}][REGISTER] Keycloak ID: {}", username, keycloakId);
 
                 saveUserProfile(request, keycloakId, username);
@@ -203,6 +194,31 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         /* Thực hiện login để trả ra token mới nhất của user */
         return login(LoginRequest.builder().username(request.getUsername()).password(request.getPassword()).build());
+    }
+
+    private void saveUserProfileOTP(RegisterRequest request, UserProfileOTP userProfileOTP, int countVerifyFail) {
+        if (StringUtils.notEquals(userProfileOTP.getOtp(), request.getOtp())) {
+            userProfileOTP.setCountVerifyFalse(countVerifyFail + 1);
+            userProfileOTP.setLastVerifyAt(LocalDateTime.now());
+            userProfileOTPRepository.save(userProfileOTP);
+            throw new BusinessException(Constant.OTP_EXPIRED_OR_INVALID_MES);
+        } else {
+            userProfileOTP.setIsVerified(true);
+            userProfileOTP.setVerifyAt(LocalDateTime.now());
+            userProfileOTP.setLastVerifyAt(LocalDateTime.now());
+            userProfileOTPRepository.save(userProfileOTP);
+        }
+    }
+
+    private static UserRepresentation buildUserRepresentation(RegisterRequest request) {
+        UserRepresentation userRepresentation = new UserRepresentation();
+        userRepresentation.setEnabled(true);
+        userRepresentation.setUsername(request.getUsername());
+        userRepresentation.setFirstName(request.getFirstName());
+        userRepresentation.setLastName(request.getLastName());
+        userRepresentation.setEmail(request.getEmail());
+        userRepresentation.setEmailVerified(true);
+        return userRepresentation;
     }
 
     @Override

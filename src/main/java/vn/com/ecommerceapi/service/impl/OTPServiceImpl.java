@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.MediaType;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import vn.com.ecommerceapi.constant.Constant;
@@ -24,6 +23,8 @@ import vn.com.ecommerceapi.utils.RegexUtils;
 import vn.com.ecommerceapi.utils.StringUtils;
 
 import java.security.SecureRandom;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -35,6 +36,8 @@ public class OTPServiceImpl implements OTPService {
 
     private static final String CONTENT = "<h2>Mã xác thực đăng ký tại Ecommerce</h2><p>Xin chào: %s,</p><p>Mã OTP của bạn là: <strong>%s</strong></p><p>Vui lòng sử dụng mã OTP này để xác thực đăng ký tài khoản của bạn</p><p>Lưu ý không chia sẻ mã OTP này cho bất kỳ ai.</p><br><p>Trân trọng,</p><p>Ecommerce</p>";
     private static final String SUBJECT = "Mã xác thực đăng ký tài khoản tại Ecommerce";
+    private static final int TOTAL_RETRY_PER_DAY = 3;
+    private static final int TOTAL_FALSE_OTP = 5;
 
     private final UserProfileOTPRepository userProfileOTPRepository;
     private final UserProfileRepository userProfileRepository;
@@ -45,27 +48,22 @@ public class OTPServiceImpl implements OTPService {
 
     @Override
     public void sendOTP(SendOTPRequest request) {
-        if (StringUtils.isNullOrEmpty(request.getEmail()) || RegexUtils.matches(request.getEmail(), RegexUtils.EMAIL)) {
-            throw new BusinessException("Email không hợp lệ");
-        }
-
-        if (StringUtils.isNullOrEmpty(request.getUsername())) {
-            throw new BusinessException("Username không được để trống");
-        }
+        /* Kiểm tra Email có đúng định dạng hay không, và username */
+        validateRequest(request);
 
         String username = request.getUsername();
 
         /* Nếu tồn tại thông tin user thì dừng luồng */
-        Optional<UserProfile> userProfileOptional = userProfileRepository.findByUsername(username);
-        if (userProfileOptional.isPresent()) {
-            throw new BusinessException(Constant.USERNAME_EXISTS);
-        }
+        validateUserExist(username);
 
-        UserProfileOTP userProfileOTP = userProfileOTPRepository.getLatestOTP(request.getUsername(), OTPTypeEnum.REGISTER.name());
-        if (Objects.nonNull(userProfileOTP)) {
+        /* Kiểm tra số lần gửi OTP trong 1 ngày */
+        validateTotalOTPInDay(username);
 
-        }
+        /* Kiểm tra đã quá số lần verify fail hay chưa */
+        validateCountVerifyOTP(request);
 
+        /* Inactive tất cả OTP đang còn hiệu lực nếu cấp mới OTP */
+        userProfileOTPRepository.inactiveAllStatus(username, OTPTypeEnum.REGISTER.name());
 
         String otp = generateOTP();
         LOGGER.info("[OTP][{}][SEND OTP] Mã OTP: {}", username, otp);
@@ -75,6 +73,54 @@ public class OTPServiceImpl implements OTPService {
 
         /* Lưu thông tin OTP để verify */
         saveUserProfileOTP(request, otp);
+    }
+
+    private static void validateRequest(SendOTPRequest request) {
+        if (StringUtils.isNullOrEmpty(request.getEmail()) || RegexUtils.matches(request.getEmail(), RegexUtils.EMAIL)) {
+            throw new BusinessException("Email không hợp lệ");
+        }
+
+        if (StringUtils.isNullOrEmpty(request.getUsername())) {
+            throw new BusinessException("Username không được để trống");
+        }
+    }
+
+    private void validateUserExist(String username) {
+        Optional<UserProfile> userProfileOptional = userProfileRepository.findByUsername(username);
+        if (userProfileOptional.isPresent()) {
+            throw new BusinessException(Constant.USERNAME_EXISTS);
+        }
+    }
+
+    private void validateCountVerifyOTP(SendOTPRequest request) {
+        UserProfileOTP userProfileOTP = userProfileOTPRepository.getLatestOTP(request.getUsername(), OTPTypeEnum.REGISTER.name());
+        if (Objects.nonNull(userProfileOTP)) {
+            int countVerifyFail = userProfileOTP.getCountVerifyFalse() == null ? 0 : userProfileOTP.getCountVerifyFalse();
+            if (Boolean.FALSE.equals(userProfileOTP.getStatus())
+                    && Objects.nonNull(userProfileOTP.getLastVerifyAt())
+                    && countVerifyFail >= TOTAL_FALSE_OTP
+                    && compareTimeVerify(userProfileOTP.getLastVerifyAt())) {
+                throw new BusinessException(String.format(Constant.VERIFY_OTP_BLOCKED_MESS, TOTAL_FALSE_OTP));
+            }
+        }
+    }
+
+    private void validateTotalOTPInDay(String username) {
+        int totalOTPToday = userProfileRepository.getTotalOTPToday(username, OTPTypeEnum.REGISTER.name());
+        if (totalOTPToday >= TOTAL_RETRY_PER_DAY) {
+            throw new BusinessException(Constant.OTP_EXCEEDED);
+        }
+    }
+
+    private boolean compareTimeVerify(LocalDateTime verifyAt) {
+        /* Lấy thời gian hiện tại */
+        LocalDateTime now = LocalDateTime.now();
+
+        /* Tính khoảng cách thời gian giữa thời gian hiện tại và thời gian cần so sánh */
+        Duration duration = Duration.between(verifyAt, now);
+
+        /* Kiểm tra xem khoảng cách này có quá 5 phút hay không */
+        return Math.abs(duration.toMillis()) <= 300000;
     }
 
     private void sendEmail(SendOTPRequest request, String username, String otp) {
