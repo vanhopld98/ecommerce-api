@@ -6,6 +6,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import vn.com.ecommerceapi.entity.UserProfile;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -16,7 +17,6 @@ public interface UserProfileRepository extends JpaRepository<UserProfile, String
     @Query(value = "select keycloak_id from user_profile where username = :username", nativeQuery = true)
     String getKeycloakIdByUsername(@Param("username") String username);
 
-    @Query(value = "select count(1) from user_profile_otp where username =:username and type =:type and to_char(created_at, 'ddMMyyyy') = to_char(now(), 'ddMMyyyy') limit 10 ", nativeQuery = true)
-    Integer getTotalOTPToday(String username, String type);
-
+    @Query(value = "select * from user_profile order by created_at desc", nativeQuery = true)
+    List<UserProfile> findUserProfilesOrderByCreatedAtDesc();
 }

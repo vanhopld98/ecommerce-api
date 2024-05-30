@@ -106,7 +106,7 @@ public class OTPServiceImpl implements OTPService {
     }
 
     private void validateTotalOTPInDay(String username) {
-        int totalOTPToday = userProfileRepository.getTotalOTPToday(username, OTPTypeEnum.REGISTER.name());
+        int totalOTPToday = userProfileOTPRepository.getTotalOTPToday(username, OTPTypeEnum.REGISTER.name());
         if (totalOTPToday >= TOTAL_RETRY_PER_DAY) {
             throw new BusinessException(Constant.OTP_EXCEEDED);
         }
