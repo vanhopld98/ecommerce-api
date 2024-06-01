@@ -13,5 +13,4 @@ public class ProductController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProductController.class);
 
-
 }

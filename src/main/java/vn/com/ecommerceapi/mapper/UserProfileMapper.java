@@ -9,6 +9,6 @@ import vn.com.ecommerceapi.model.response.UserProfileResponse;
 @Mapper(componentModel = "spring")
 public interface UserProfileMapper {
 
-    UserProfileResponse convertToUserProfileResponse(UserProfile userProfile);
+    UserProfileResponse mapToUserProfileResponse(UserProfile userProfile);
 
 }

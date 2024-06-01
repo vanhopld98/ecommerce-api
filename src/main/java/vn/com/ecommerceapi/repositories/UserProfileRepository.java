@@ -14,6 +14,8 @@ public interface UserProfileRepository extends JpaRepository<UserProfile, String
 
     Optional<UserProfile> findByUsername(String username);
 
+    Optional<UserProfile> findByKeycloakId(String keycloakId);
+
     @Query(value = "select keycloak_id from user_profile where username = :username", nativeQuery = true)
     String getKeycloakIdByUsername(@Param("username") String username);
 

@@ -14,6 +14,7 @@ public class Constant {
     public static final String ERROR_REGISTER_USER = "Có lỗi trong quá trình đăng ký tài khoản. Vui lòng thử lại.";
     public static final String OTP_EXCEEDED = "Mã xác thực chỉ được gửi tối đa 3 lần trong 1 ngày";
     public static final String VERIFY_OTP_BLOCKED_MESS = "Bạn đã nhập sai mã OTP %s lần liên tiếp, vui lòng thử lại sau 5 phút.";
+    public static final String USER_NOT_EXIST = "Tài khoản không tồn tại. Vui lòng kiểm tra lại.";
 
 
 }
