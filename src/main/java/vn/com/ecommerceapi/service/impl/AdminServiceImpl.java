@@ -31,14 +31,14 @@ public class AdminServiceImpl implements AdminService {
     public UserProfilesResponse getUserProfiles(int page, int size) {
         String username = JWTUtils.getUsername();
 
-        List<UserProfile> userProfiles = userProfileRepository.findUserProfilesOrderByCreatedAtDesc().stream().skip((long) page * size).limit(size).toList();
+        List<UserProfile> userProfiles = userProfileRepository.findUserProfilesOrderByCreatedAtDesc();
         LOGGER.info("[ADMIN][{}][GET USERS] User Profiles: {}", username, userProfiles);
 
         int totalPage = getTotalPage(size, userProfiles);
         LOGGER.info("[ADMIN][{}][GET USERS] Tổng số trang: {}", username, totalPage);
 
         List<UserProfileResponse> userProfileResponses = new ArrayList<>();
-        for (UserProfile userProfile : userProfiles) {
+        for (UserProfile userProfile : userProfiles.stream().skip((long) page * size).limit(size).toList()) {
             UserProfileResponse userProfileResponse = userProfileMapper.mapToUserProfileResponse(userProfile);
             userProfileResponses.add(userProfileResponse);
         }
@@ -47,7 +47,7 @@ public class AdminServiceImpl implements AdminService {
         return UserProfilesResponse.builder()
                 .page(page)
                 .size(size)
-                .totalPage(totalPage)
+                .total(userProfiles.size())
                 .userProfiles(userProfileResponses)
                 .build();
     }

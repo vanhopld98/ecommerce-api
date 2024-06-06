@@ -15,7 +15,7 @@ public class UserProfilesResponse {
 
     private int page;
     private int size;
-    private int totalPage;
+    private int total;
     private List<UserProfileResponse> userProfiles;
 
 }

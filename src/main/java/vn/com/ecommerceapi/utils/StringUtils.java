@@ -2,6 +2,11 @@ package vn.com.ecommerceapi.utils;
 
 public class StringUtils {
 
+    private StringUtils() {
+    }
+
+    public static final String EMPTY = "";
+
     public static boolean isNullOrEmpty(String val) {
         return val == null || val.trim().isBlank() || val.trim().isEmpty();
     }
