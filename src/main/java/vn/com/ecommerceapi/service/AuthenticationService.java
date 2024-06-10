@@ -9,7 +9,7 @@ public interface AuthenticationService {
 
     LoginResponse login(LoginRequest loginRequest);
 
-    LoginResponse register(RegisterRequest registerRequest);
+    void register(RegisterRequest registerRequest);
 
     void logout(String username);
 

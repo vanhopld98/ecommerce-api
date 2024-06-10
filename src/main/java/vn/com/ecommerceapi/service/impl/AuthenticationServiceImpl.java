@@ -112,7 +112,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public LoginResponse register(RegisterRequest request) {
+    public void register(RegisterRequest request) {
         String username = request.getUsername();
 
         /* Tìm kiếm trong DB xem username này đã tồn tại hay chưa */
@@ -187,9 +187,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         /* Inactive toàn bộ OTP của user */
         userProfileOTPRepository.inactiveAllStatus(username, OTPTypeEnum.REGISTER.name());
-
-        /* Thực hiện login để trả ra token mới nhất của user */
-        return login(LoginRequest.builder().username(request.getUsername()).password(request.getPassword()).build());
     }
 
     @Override
@@ -208,6 +205,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         if (!userSessions.isEmpty()) {
             usersResource.logout();
+            keycloak.close();
         }
 
         /* Xoá key ở redis */
