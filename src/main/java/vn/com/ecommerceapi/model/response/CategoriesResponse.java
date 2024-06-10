@@ -11,11 +11,8 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserProfilesResponse {
+public class CategoriesResponse {
 
-    private int page;
-    private int size;
-    private int total;
-    private List<UserProfileResponse> userProfiles;
+    private List<CategoryResponse> categories;
 
 }

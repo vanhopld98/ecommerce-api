@@ -23,9 +23,11 @@ import vn.com.ecommerceapi.exception.AuthenticationException;
 import vn.com.ecommerceapi.exception.BusinessException;
 import vn.com.ecommerceapi.mapper.AuthenticationMapper;
 import vn.com.ecommerceapi.model.request.LoginRequest;
+import vn.com.ecommerceapi.model.request.RefreshTokenRequest;
 import vn.com.ecommerceapi.model.request.RegisterRequest;
 import vn.com.ecommerceapi.model.response.LoginResponse;
 import vn.com.ecommerceapi.model.response.RolesUserResponse;
+import vn.com.ecommerceapi.proxy.KeycloakProxy;
 import vn.com.ecommerceapi.redis.TokenRedisService;
 import vn.com.ecommerceapi.repositories.UserProfileOTPRepository;
 import vn.com.ecommerceapi.repositories.UserProfileRepository;
@@ -41,7 +43,6 @@ import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -52,13 +53,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private static final int TOTAL_FALSE_OTP = 5;
     private static final String ROLE_USER = "ROLE_USER";
 
+    private final KeycloakProxy keycloakProxy;
+    private final KeycloakService keycloakService;
+    private final TokenRedisService tokenRedisService;
     private final UserProfileService userProfileService;
+    private final AuthenticationMapper authenticationMapper;
+    private final UserProfileRepository userProfileRepository;
     private final UserProfileOTPRepository userProfileOTPRepository;
     private final KeycloakSpringBootProperties keycloakSpringBootProperties;
-    private final KeycloakService keycloakService;
-    private final UserProfileRepository userProfileRepository;
-    private final TokenRedisService tokenRedisService;
-    private final AuthenticationMapper authenticationMapper;
 
     @Override
     public LoginResponse login(LoginRequest request) {
@@ -74,7 +76,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         LOGGER.info("[AUTHENTICATION][{}][LOGIN] User Profile: {}", username, userProfile);
 
         if (Objects.isNull(userProfile)) {
-            throw new BusinessException("Username không tồn tại");
+            throw new BusinessException("Tài khoản chưa được đăng ký, vui lòng đăng ký tài khoản để tiếp tục.");
         }
 
         if (Boolean.FALSE.equals(userProfile.getIsActive())) {
@@ -94,25 +96,23 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         AccessTokenResponse accessTokenKeycloak = keyCloak.tokenManager().getAccessToken();
 
         DecodedJWT jwtDecode = JWT.decode(accessTokenKeycloak.getToken());
-        List<String> roles = jwtDecode.getClaim("realm_access").as(RolesUserResponse.class).getRoles().stream().filter(role -> role.startsWith("ROLE")).collect(Collectors.toList());
+        List<String> roles = jwtDecode.getClaim("realm_access").as(RolesUserResponse.class).getRoles().stream().filter(role -> role.startsWith("ROLE")).toList();
         LOGGER.info("[AUTHENTICATION][{}][LOGIN] Roles: {}", username, roles);
 
         if (roles.isEmpty()) {
             throw new AuthenticationException("Bạn không có quyền truy cập chức năng này. Vui lòng đăng nhập lại", 403);
         }
 
-        LOGGER.info("[AUTHENTICATION][{}][LOGIN] Login Success", username);
-
-        Date expiredTimeToken = JWTUtils.getExpiredTime(accessTokenKeycloak.getToken());
-
         /* Lưu token vào redis theo thời gian hết hạn token */
-        tokenRedisService.set(username, accessTokenKeycloak.getToken(), expiredTimeToken);
+        saveTokenToRedis(username, accessTokenKeycloak);
+        LOGGER.info("[AUTHENTICATION][{}][LOGIN] Lưu thông tin Token vào Redis thành công", username);
 
+        LOGGER.info("[AUTHENTICATION][{}][LOGIN] Login Success", username);
         return authenticationMapper.mapToLoginResponse(accessTokenKeycloak, roles);
     }
 
     @Override
-    public LoginResponse register(RegisterRequest request) {
+    public void register(RegisterRequest request) {
         String username = request.getUsername();
 
         /* Tìm kiếm trong DB xem username này đã tồn tại hay chưa */
@@ -127,10 +127,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         if (Objects.isNull(userProfileOTP)) {
             throw new BusinessException(Constant.OTP_EXPIRED_OR_INVALID_MES);
-        }
-
-        if (Objects.nonNull(userProfileOTP.getLastVerifyAt())) {
-            throw new BusinessException(Constant.OTP_VERIFY_NULL);
         }
 
         int countVerifyFail = Objects.isNull(userProfileOTP.getCountVerifyFalse()) ? 0 : userProfileOTP.getCountVerifyFalse();
@@ -191,9 +187,107 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         /* Inactive toàn bộ OTP của user */
         userProfileOTPRepository.inactiveAllStatus(username, OTPTypeEnum.REGISTER.name());
+    }
 
-        /* Thực hiện login để trả ra token mới nhất của user */
-        return login(LoginRequest.builder().username(request.getUsername()).password(request.getPassword()).build());
+    @Override
+    public void logout(String username) {
+        LOGGER.info("[AUTHENTICATION][{}][LOGOUT] Starting.....", username);
+
+        if (StringUtils.isNullOrEmpty(username)) {
+            return;
+        }
+        String keycloakId = userProfileRepository.getKeycloakIdByUsername(username);
+        LOGGER.info("[AUTHENTICATION][{}][LOGOUT] Keycloak ID: {}", username, keycloakId);
+
+        Keycloak keycloak = keycloakService.getKeycloakByClient();
+        UserResource usersResource = keycloak.realm(keycloakSpringBootProperties.getRealm()).users().get(keycloakId);
+        List<UserSessionRepresentation> userSessions = usersResource.getUserSessions();
+
+        if (!userSessions.isEmpty()) {
+            usersResource.logout();
+            keycloak.close();
+        }
+
+        /* Xoá key ở redis */
+        tokenRedisService.remove(username);
+
+        LOGGER.info("[AUTHENTICATION][{}][LOGOUT] Logout Success", username);
+    }
+
+    @Override
+    public LoginResponse refresh(RefreshTokenRequest request) {
+        validateRequest(request);
+
+        String username = request.getUsername();
+
+        validateRefreshToken(request, username);
+
+        AccessTokenResponse accessTokenResponse = keycloakProxy.refreshToken(request.getRefreshToken());
+
+        /* kiểm tra xem đã refresh thành công */
+        if (accessTokenResponse == null || accessTokenResponse.getToken() == null || accessTokenResponse.getRefreshToken() == null) {
+            throw new AuthenticationException();
+        }
+
+        saveTokenToRedis(request.getUsername(), accessTokenResponse);
+        LOGGER.info("[AUTHENTICATION][{}][REFRESH] Lưu thông tin Token vào Redis thành công", username);
+
+        List<String> roles = JWTUtils.getRoles(accessTokenResponse.getToken());
+        LOGGER.info("[AUTHENTICATION][{}][REFRESH] Roles: {}", username, roles);
+
+        return authenticationMapper.mapToLoginResponse(accessTokenResponse, roles);
+    }
+
+    private void saveTokenToRedis(String username, AccessTokenResponse accessTokenResponse) {
+        Date expiredTimeToken = JWTUtils.getExpiredTime(accessTokenResponse.getToken());
+        LOGGER.info("[AUTHENTICATION][{}] Thời gian hết hạn Token: {}", username, expiredTimeToken);
+
+        Date expiredTimeRefreshToken = JWTUtils.getExpiredTime(accessTokenResponse.getRefreshToken());
+        LOGGER.info("[AUTHENTICATION][{}] Thời gian hết hạn Refresh Token: {}", username, expiredTimeRefreshToken);
+
+        /* lưu access token mới redis */
+        tokenRedisService.set(username, accessTokenResponse.getToken(), expiredTimeToken);
+
+        /* lưu refresh token mới redis */
+        tokenRedisService.setRefreshToken(username, accessTokenResponse.getRefreshToken(), expiredTimeRefreshToken);
+    }
+
+    private void validateRefreshToken(RefreshTokenRequest request, String username) {
+        /* kiểm tra refresh token có tồn tại trên redis không */
+        String refreshTokenRedis = tokenRedisService.getRefreshToken(request.getUsername());
+        if (StringUtils.notEquals(refreshTokenRedis, request.getRefreshToken())) {
+            LOGGER.info("[AUTHENTICATION][{}][REFRESH] Refresh token không tồn tại hoặc đã hết hạn", username);
+            throw new AuthenticationException();
+        }
+
+        /* kiểm tra token có tồn tại trên redis không */
+        String tokenRedis = tokenRedisService.get(request.getUsername());
+        if (!StringUtils.isNullOrEmpty(tokenRedis)) {
+            LOGGER.info("[AUTHENTICATION][{}][REFRESH] Token chưa hết hạn", username);
+            throw new AuthenticationException();
+        }
+    }
+
+    private static void validateRequest(RefreshTokenRequest request) {
+        if (StringUtils.isNullOrEmpty(request.getRefreshToken()) || StringUtils.isNullOrEmpty(request.getUsername())) {
+            throw new BusinessException("Username hoặc refresh token không được để trống");
+        }
+    }
+
+    private void saveUserProfile(RegisterRequest request, String keycloakId, String username) {
+        UserProfile userProfileCreate = UserProfile
+                .builder()
+                .address(request.getAddress())
+                .email(request.getEmail())
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .keycloakId(keycloakId)
+                .username(username)
+                .isActive(true)
+                .phoneNumber(request.getPhoneNumber())
+                .password(PasswordUtils.endCodeMD5(request.getPassword()))
+                .build();
+        userProfileRepository.save(userProfileCreate);
     }
 
     private void saveUserProfileOTP(RegisterRequest request, UserProfileOTP userProfileOTP, int countVerifyFail) {
@@ -219,45 +313,5 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         userRepresentation.setEmail(request.getEmail());
         userRepresentation.setEmailVerified(true);
         return userRepresentation;
-    }
-
-    @Override
-    public void logout(String username) {
-        LOGGER.info("[AUTHENTICATION][{}][LOGOUT] Starting.....", username);
-
-        if (StringUtils.isNullOrEmpty(username)) {
-            return;
-        }
-        String keycloakId = userProfileRepository.getKeycloakIdByUsername(username);
-        LOGGER.info("[AUTHENTICATION][{}][LOGOUT] Keycloak ID: {}", username, keycloakId);
-
-        Keycloak keycloak = keycloakService.getKeycloakByClient();
-        UserResource usersResource = keycloak.realm(keycloakSpringBootProperties.getRealm()).users().get(keycloakId);
-        List<UserSessionRepresentation> userSessions = usersResource.getUserSessions();
-
-        if (!userSessions.isEmpty()) {
-            usersResource.logout();
-        }
-
-        /* Xoá key ở redis */
-        tokenRedisService.remove(username);
-
-        LOGGER.info("[AUTHENTICATION][{}][LOGOUT] Logout Success", username);
-    }
-
-    private void saveUserProfile(RegisterRequest request, String keycloakId, String username) {
-        UserProfile userProfileCreate = UserProfile
-                .builder()
-                .address(request.getAddress())
-                .email(request.getEmail())
-                .firstName(request.getFirstName())
-                .lastName(request.getLastName())
-                .keycloakId(keycloakId)
-                .username(username)
-                .isActive(true)
-                .phoneNumber(request.getPhoneNumber())
-                .password(PasswordUtils.endCodeMD5(request.getPassword()))
-                .build();
-        userProfileRepository.save(userProfileCreate);
     }
 }

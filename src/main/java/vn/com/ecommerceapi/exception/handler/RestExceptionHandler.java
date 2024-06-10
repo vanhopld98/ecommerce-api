@@ -6,6 +6,8 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -17,6 +19,8 @@ import vn.com.ecommerceapi.exception.model.ExceptionModel;
 import vn.com.ecommerceapi.utils.StringUtils;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 @RestControllerAdvice()
@@ -40,7 +44,7 @@ public class RestExceptionHandler extends Throwable implements Serializable {
     @ResponseStatus(value = HttpStatus.BAD_REQUEST)
     @ResponseBody
     @Order(value = Ordered.HIGHEST_PRECEDENCE)
-    public ResponseEntity<ExceptionModel> handleAllException(BusinessException ex) {
+    public ResponseEntity<ExceptionModel> handleBusinessException(BusinessException ex) {
         String message = Objects.isNull(ex) || StringUtils.isNullOrEmpty(ex.getMessage()) ? Constant.EXCEPTION_MESSAGE_DEFAULT : ex.getMessage();
         String code = Objects.isNull(ex) || StringUtils.isNullOrEmpty(ex.getCode()) ? null : ex.getCode();
         Object details = Objects.isNull(ex) ? null : ex.getData();
@@ -57,5 +61,32 @@ public class RestExceptionHandler extends Throwable implements Serializable {
         HttpStatus httpStatus = Objects.isNull(ex) || Objects.isNull(ex.getStatusCode()) ? HttpStatus.UNAUTHORIZED : HttpStatus.valueOf(ex.getStatusCode());
         ExceptionModel exception = ExceptionModel.builder().message(message).build();
         return new ResponseEntity<>(exception, httpStatus);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
+    @ResponseBody
+    @Order(value = Ordered.HIGHEST_PRECEDENCE)
+    public ResponseEntity<ExceptionModel> handleValidationException(MethodArgumentNotValidException ex) {
+        List<ExceptionModel> errors = getErrors(ex);
+        LOGGER.error("[EXCEPTION][VALIDATION] Validation Error: {}", errors);
+        ExceptionModel exception = ExceptionModel.builder().message("Thông tin đầu vào không hợp lệ.").detail(errors).build();
+        return new ResponseEntity<>(exception, HttpStatus.BAD_REQUEST);
+    }
+
+    private List<ExceptionModel> getErrors(MethodArgumentNotValidException e) {
+        List<ExceptionModel> validationErrorModels = new ArrayList<>();
+        for (FieldError fieldError : e.getBindingResult().getFieldErrors()) {
+            validationErrorModels.add(buildExceptionModelValidation(fieldError));
+        }
+        return validationErrorModels;
+    }
+
+    private static ExceptionModel buildExceptionModelValidation(FieldError fieldError) {
+        ExceptionModel validationErrorModel = new ExceptionModel();
+        validationErrorModel.setCode(fieldError.getCode());
+        validationErrorModel.setDescription(fieldError.getObjectName() + "/" + fieldError.getField());
+        validationErrorModel.setMessage(fieldError.getDefaultMessage());
+        return validationErrorModel;
     }
 }

@@ -1,21 +1,17 @@
 package vn.com.ecommerceapi.model.response;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserProfilesResponse {
+public class ProductsResponse {
 
-    private int page;
-    private int size;
-    private int total;
-    private List<UserProfileResponse> userProfiles;
+    private int totalElements;
+    private List<ProductResponse> productResponses;
 
 }
