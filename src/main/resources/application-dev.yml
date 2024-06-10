@@ -50,3 +50,7 @@ redis:
   host: ${REDIS_HOST:127.0.0.1}
   database: ${REDIS_DATABASE:0}
   timeout: ${REDIS_TIMEOUT:3600}
+
+imgur:
+  client-id: 4f9ac8f3e8b50b4
+  upload-url: https://api.imgur.com/3/image

@@ -34,6 +34,13 @@ public class BaseProxy {
         return headers;
     }
 
+    protected HttpHeaders initHeaders(String clientId) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        headers.set("Authorization", clientId);
+        return headers;
+    }
+
     protected <R> R post(String url, Function<Integer, HttpHeaders> headersFunction, Map<String, Object> payload, Class<R> rClass) {
         return post(url, headersFunction, payload, 0, rClass);
     }
