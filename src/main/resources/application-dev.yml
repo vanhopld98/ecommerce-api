@@ -1,0 +1,52 @@
+server:
+  port: 9090
+
+spring:
+  application:
+    name: ecommerce-api
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    username: postgres
+    password: 123456
+    url: jdbc:postgresql://localhost:5432/ecommerce
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    generate-ddl: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        jdbc:
+          lob:
+            non_contextual_creation: true
+    open-in-view: false
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: vanhopld98@gmail.com
+    password: qpegujdadgkatjlq
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enabled: true
+
+keycloak:
+  realm: ecommerce
+  auth-server-url: http://localhost:8080
+  resource: ecommerce
+  ssl-required: none
+  principal-attribute: preferred_username
+  use-resource-role-mappings: true
+  bearer-only: true
+  cors: true
+  credentials:
+    secret: Ci46k241jyuSlyXHVi7gtqdDO219tMrH
+  public-client: true
+
+redis:
+  port: ${REDIS_PORT:6379}
+  host: ${REDIS_HOST:127.0.0.1}
+  database: ${REDIS_DATABASE:0}
+  timeout: ${REDIS_TIMEOUT:3600}
