@@ -33,8 +33,10 @@ public class ProductController {
 
     @GetMapping("/products")
     public ResponseEntity<ProductsResponse> getProducts(@RequestParam("page") int page,
-                                                        @RequestParam("size") int size) {
-        return ResponseEntity.ok(productService.getProducts(page, size));
+                                                        @RequestParam("size") int size,
+                                                        @RequestParam(value = "categoryId", required = false) String categoryId,
+                                                        @RequestParam(value = "name", required = false) String name) {
+        return ResponseEntity.ok(productService.getProducts(page, size, categoryId, name));
     }
 
     @GetMapping("/product/{id}")
@@ -42,7 +44,7 @@ public class ProductController {
         return ResponseEntity.ok(productService.getProduct(id));
     }
 
-//    @Secured(role = RoleEnum.ADMIN)
+    @Secured(role = RoleEnum.ADMIN)
     @PostMapping(value = "/product")
     public ResponseEntity<ProductResponse> createProduct(@Valid @ModelAttribute CreateProductRequest request) {
         return ResponseEntity.ok(productService.createProduct(request));

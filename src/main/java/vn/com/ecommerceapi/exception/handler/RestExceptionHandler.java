@@ -37,6 +37,7 @@ public class RestExceptionHandler extends Throwable implements Serializable {
     @Order()
     public ResponseEntity<ExceptionModel> handleAllException(Throwable ex) {
         ExceptionModel exceptionDTO = ExceptionModel.builder().message(Constant.EXCEPTION_MESSAGE_DEFAULT).description(ex.getLocalizedMessage()).build();
+        LOGGER.error("[EXCEPTION] Message: {}. Description: {}", exceptionDTO.getMessage(), exceptionDTO.getDescription());
         return new ResponseEntity<>(exceptionDTO, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 

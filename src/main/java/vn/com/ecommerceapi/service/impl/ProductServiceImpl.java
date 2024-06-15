@@ -4,22 +4,31 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import vn.com.ecommerceapi.entity.Category;
 import vn.com.ecommerceapi.entity.ImgurUpload;
 import vn.com.ecommerceapi.entity.Product;
 import vn.com.ecommerceapi.exception.BusinessException;
+import vn.com.ecommerceapi.mapper.CategoriesMapper;
+import vn.com.ecommerceapi.mapper.ProductMapper;
 import vn.com.ecommerceapi.model.proxy.response.ImgurUploadData;
 import vn.com.ecommerceapi.model.proxy.response.ImgurUploadResponse;
 import vn.com.ecommerceapi.model.request.CreateProductRequest;
+import vn.com.ecommerceapi.model.response.CategoryResponse;
 import vn.com.ecommerceapi.model.response.ProductResponse;
 import vn.com.ecommerceapi.model.response.ProductsResponse;
 import vn.com.ecommerceapi.proxy.ImgurProxy;
 import vn.com.ecommerceapi.repositories.CategoryRepository;
 import vn.com.ecommerceapi.repositories.ImgurUploadRepository;
 import vn.com.ecommerceapi.repositories.ProductRepository;
+import vn.com.ecommerceapi.repositories.specification.ProductSpecification;
 import vn.com.ecommerceapi.service.ProductService;
+import vn.com.ecommerceapi.utils.FileUtils;
 import vn.com.ecommerceapi.utils.JWTUtils;
 
+import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -32,10 +41,23 @@ public class ProductServiceImpl implements ProductService {
     private final ImgurUploadRepository imgurUploadRepository;
     private final CategoryRepository categoryRepository;
     private final ImgurProxy imgurProxy;
+    private final FileUtils fileUtils;
+    private final ProductSpecification productSpecification;
+    private final ProductMapper productMapper;
+    private final CategoriesMapper categoriesMapper;
 
     @Override
-    public ProductsResponse getProducts(int page, int size) {
-        return null;
+    public ProductsResponse getProducts(int page, int size, String categoryId, String name) {
+        List<Product> products = productSpecification.findAllByCategoryIdAndName(categoryId, name);
+        List<ProductResponse> productResponses = new ArrayList<>();
+        for (Product product : products.stream().skip((long) page * size).limit(size).toList()) {
+            ProductResponse productResponse = productMapper.mapToProductResponse(product);
+            Category category = categoryRepository.findById(product.getCategoryId()).orElse(null);
+            CategoryResponse categoryResponse = categoriesMapper.mapToCategoryResponse(category);
+            productResponse.setCategory(categoryResponse);
+            productResponses.add(productResponse);
+        }
+        return ProductsResponse.builder().totalElements(products.size()).products(productResponses).build();
     }
 
     @Override
@@ -56,13 +78,15 @@ public class ProductServiceImpl implements ProductService {
         }
 
         /* Uplaod ảnh lên Imgur */
+        File file = FileUtils.convertMultipartFileToFile(request.getImage());
+
         Map<String, Object> uploadRequest = new HashMap<>();
-        uploadRequest.put("image", request.getImage());
+        uploadRequest.put("image", file);
 
         ImgurUploadResponse uploadResponse = imgurProxy.upload(uploadRequest);
         LOGGER.info("[PRODUCT][CREATE PRODUCT][{}] Response Upload Image: {}", username, uploadResponse);
 
-        if (uploadResponse == null || uploadResponse.getData() == null || uploadResponse.isSuccess()) {
+        if (uploadResponse == null || uploadResponse.getData() == null || !uploadResponse.isSuccess()) {
             throw new BusinessException("Có lỗi trong quá trình upload ảnh");
         }
 
@@ -72,6 +96,8 @@ public class ProductServiceImpl implements ProductService {
         saveImgurUpload(imgurData);
 
         Product product = saveProduct(request, imgurData);
+
+        fileUtils.deleteFileAsynchronous(file);
 
         return mapToProductResponse(product);
     }

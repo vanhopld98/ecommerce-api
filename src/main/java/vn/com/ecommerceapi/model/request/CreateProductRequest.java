@@ -20,7 +20,7 @@ public class CreateProductRequest {
 
     private String description;
 
-    @NotNull(message = "File ảnh sản phẩm không được để trống")
+//    @NotNull(message = "File ảnh sản phẩm không được để trống")
     private MultipartFile image;
 
     @NotNull(message = "Số lượng sản phẩm không được để trống")

@@ -88,7 +88,7 @@ public class OTPServiceImpl implements OTPService {
     private void validateUserExist(String username) {
         Optional<UserProfile> userProfileOptional = userProfileRepository.findByUsername(username);
         if (userProfileOptional.isPresent()) {
-            throw new BusinessException(Constant.USERNAME_EXISTS);
+            throw new BusinessException(Constant.USERNAME_EXISTS, "USERNAME_EXISTS");
         }
     }
 

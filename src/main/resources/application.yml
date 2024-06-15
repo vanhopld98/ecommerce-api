@@ -31,6 +31,9 @@ spring:
           auth: true
           starttls:
             enabled: true
+  servlet:
+    multipart:
+      enabled: true
 
 keycloak:
   realm: ecommerce
@@ -53,3 +56,8 @@ redis:
 
 rest-template:
   timeout: 30
+
+imgur:
+  client-id: 4f9ac8f3e8b50b4
+  upload-url: https://api.imgur.com/3/image
+
