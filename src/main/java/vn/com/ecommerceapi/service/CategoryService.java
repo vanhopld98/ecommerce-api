@@ -7,7 +7,7 @@ import vn.com.ecommerceapi.model.response.CategoryResponse;
 
 public interface CategoryService {
 
-    CategoriesResponse findAll();
+    CategoriesResponse findAll(boolean productCount);
 
     void create(CreateCategoryRequest request);
 

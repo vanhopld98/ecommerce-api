@@ -1,10 +1,10 @@
 package vn.com.ecommerceapi.redis;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+import vn.com.ecommerceapi.logging.LoggingFactory;
 
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class RedisService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RedisService.class);
+    private static final Logger LOGGER = LoggingFactory.getLogger(RedisService.class);
 
     @SuppressWarnings("rawtypes")
     @Autowired

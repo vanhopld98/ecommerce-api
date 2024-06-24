@@ -1,8 +1,8 @@
 package vn.com.ecommerceapi.utils;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import vn.com.ecommerceapi.logging.LoggingFactory;
 
 import java.util.regex.Pattern;
 
@@ -12,7 +12,7 @@ public class RegexUtils {
     RegexUtils() {
     }
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RegexUtils.class);
+    private static final Logger LOGGER = LoggingFactory.getLogger(RegexUtils.class);
 
     public static final String EMAIL = "/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$/gm";
 

@@ -1,7 +1,6 @@
 package vn.com.ecommerceapi.exception.handler;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -16,6 +15,7 @@ import vn.com.ecommerceapi.constant.Constant;
 import vn.com.ecommerceapi.exception.AuthenticationException;
 import vn.com.ecommerceapi.exception.BusinessException;
 import vn.com.ecommerceapi.exception.model.ExceptionModel;
+import vn.com.ecommerceapi.logging.LoggingFactory;
 import vn.com.ecommerceapi.utils.StringUtils;
 
 import java.io.Serializable;
@@ -27,7 +27,7 @@ import java.util.Objects;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class RestExceptionHandler extends Throwable implements Serializable {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RestExceptionHandler.class);
+    private static final Logger LOGGER = LoggingFactory.getLogger(RestExceptionHandler.class);
 
     private static final long serialVersionUID = 1L;
 

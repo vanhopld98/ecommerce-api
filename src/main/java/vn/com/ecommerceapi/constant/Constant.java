@@ -15,6 +15,7 @@ public class Constant {
     public static final String OTP_EXCEEDED = "Mã xác thực chỉ được gửi tối đa 3 lần trong 1 ngày";
     public static final String VERIFY_OTP_BLOCKED_MESS = "Bạn đã nhập sai mã OTP %s lần liên tiếp, vui lòng thử lại sau 5 phút.";
     public static final String USER_NOT_EXIST = "Tài khoản không tồn tại. Vui lòng kiểm tra lại.";
+    public static final String X_ORIGIN_FORWARDED_FOR = "x-original-forwarded-for";
 
 
 }

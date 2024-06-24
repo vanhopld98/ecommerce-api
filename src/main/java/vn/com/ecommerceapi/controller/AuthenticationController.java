@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import vn.com.ecommerceapi.logging.LoggingFactory;
 import vn.com.ecommerceapi.model.request.LoginRequest;
 import vn.com.ecommerceapi.model.request.LogoutRequest;
 import vn.com.ecommerceapi.model.request.RefreshTokenRequest;
@@ -21,7 +22,7 @@ import vn.com.ecommerceapi.service.AuthenticationService;
 @RequestMapping("/api/authentication")
 public class AuthenticationController {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationController.class);
+    private static final Logger LOGGER = LoggingFactory.getLogger(AuthenticationController.class);
 
     private final AuthenticationService authenticationService;
 

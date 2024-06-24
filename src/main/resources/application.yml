@@ -61,3 +61,10 @@ imgur:
   client-id: 4f9ac8f3e8b50b4
   upload-url: https://api.imgur.com/3/image
 
+vnpay:
+  version: 2.1.0
+  callback-url: http://localhost:9090
+  tmn-code: I6QV7B8W
+  hash-secret: HJMAWPIQ5SU4ASBKKACMXJD57UGYGUKT
+  command: pay
+  domain: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html

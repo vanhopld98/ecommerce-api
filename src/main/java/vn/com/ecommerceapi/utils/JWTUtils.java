@@ -4,10 +4,10 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import vn.com.ecommerceapi.exception.AuthenticationException;
+import vn.com.ecommerceapi.logging.LoggingFactory;
 import vn.com.ecommerceapi.model.response.RolesUserResponse;
 
 import java.util.Collections;
@@ -20,7 +20,7 @@ public class JWTUtils {
     private JWTUtils() {
     }
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(JWTUtils.class);
+    private static final Logger LOGGER = LoggingFactory.getLogger(JWTUtils.class);
 
     private static final String BEARER = "Bearer ";
     private static final String REALM_ACCESS = "realm_access";

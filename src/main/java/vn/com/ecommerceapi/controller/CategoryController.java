@@ -2,7 +2,6 @@ package vn.com.ecommerceapi.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -12,9 +11,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import vn.com.ecommerceapi.aop.Secured;
 import vn.com.ecommerceapi.enums.RoleEnum;
+import vn.com.ecommerceapi.logging.LoggingFactory;
 import vn.com.ecommerceapi.model.request.CreateCategoryRequest;
 import vn.com.ecommerceapi.model.request.UpdateCategoryRequest;
 import vn.com.ecommerceapi.model.response.CategoriesResponse;
@@ -26,13 +27,13 @@ import vn.com.ecommerceapi.service.CategoryService;
 @RequestMapping("/api")
 public class CategoryController {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CategoryController.class);
+    private static final Logger LOGGER = LoggingFactory.getLogger(CategoryController.class);
 
     private final CategoryService categoryService;
 
     @GetMapping("/categories")
-    public ResponseEntity<CategoriesResponse> findAll() {
-        return ResponseEntity.ok(categoryService.findAll());
+    public ResponseEntity<CategoriesResponse> findAll(@RequestParam(value = "productCount", required = false) boolean productCount) {
+        return ResponseEntity.ok(categoryService.findAll(productCount));
     }
 
     @Secured(role = RoleEnum.ADMIN)

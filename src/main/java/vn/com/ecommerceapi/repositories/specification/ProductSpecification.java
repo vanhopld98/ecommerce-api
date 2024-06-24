@@ -35,7 +35,7 @@ public class ProductSpecification {
             if (StringUtils.isNullOrEmpty(name)) {
                 return null;
             }
-            return criteriaBuilder.equal(root.get(NAME), name);
+            return criteriaBuilder.like(root.get(NAME), "%" + name + "%");
         };
     }
 

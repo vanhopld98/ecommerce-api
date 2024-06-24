@@ -1,5 +1,7 @@
 package vn.com.ecommerceapi.entity;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
 import jakarta.persistence.Column;
 import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
@@ -19,10 +21,12 @@ public class BaseEntity {
 
     @Column(name = "created_at")
     @CreationTimestamp
+    @JsonSerialize(using = LocalDateSerializer.class)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     @UpdateTimestamp
+    @JsonSerialize(using = LocalDateSerializer.class)
     private LocalDateTime updatedAt;
 
 }

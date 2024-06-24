@@ -6,9 +6,9 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import vn.com.ecommerceapi.exception.AuthenticationException;
+import vn.com.ecommerceapi.logging.LoggingFactory;
 import vn.com.ecommerceapi.redis.TokenRedisService;
 import vn.com.ecommerceapi.utils.JWTUtils;
 import vn.com.ecommerceapi.utils.StringUtils;
@@ -21,7 +21,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecuredAspect {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SecuredAspect.class);
+    private static final Logger LOGGER = LoggingFactory.getLogger(SecuredAspect.class);
     public static final String AUTHORIZATION = "Authorization";
 
     private final TokenRedisService tokenRedisService;

@@ -21,6 +21,7 @@ import vn.com.ecommerceapi.entity.UserProfileOTP;
 import vn.com.ecommerceapi.enums.OTPTypeEnum;
 import vn.com.ecommerceapi.exception.AuthenticationException;
 import vn.com.ecommerceapi.exception.BusinessException;
+import vn.com.ecommerceapi.logging.LoggingFactory;
 import vn.com.ecommerceapi.mapper.AuthenticationMapper;
 import vn.com.ecommerceapi.model.request.LoginRequest;
 import vn.com.ecommerceapi.model.request.RefreshTokenRequest;
@@ -48,7 +49,7 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class AuthenticationServiceImpl implements AuthenticationService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationServiceImpl.class);
+    private static final Logger LOGGER = LoggingFactory.getLogger(AuthenticationServiceImpl.class);
 
     private static final int TOTAL_FALSE_OTP = 5;
     private static final String ROLE_USER = "ROLE_USER";
@@ -147,10 +148,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         LOGGER.info("[AUTHENTICATION][{}][REGISTER][KEYCLOAK_INSTANCE][{}]", username, keycloakInstance);
 
         UsersResource usersResource = keycloakInstance.realm(keycloakSpringBootProperties.getRealm()).users();
-        LOGGER.info("[AUTHENTICATION][{}][REGISTER][USER_RESOURCE][{}]", username, usersResource);
 
         try (Response userCreateResponse = usersResource.create(userRepresentation)) {
-            LOGGER.info("[AUTHENTICATION][{}][REGISTER][USER_CREATE_RESPONSE][{}]", username, userCreateResponse);
+            LOGGER.info("[AUTHENTICATION][{}][REGISTER] User Create Status: {}", username, userCreateResponse.getStatus());
 
             if (userCreateResponse.getStatus() == 201) {
                 String keycloakId = CreatedResponseUtil.getCreatedId(userCreateResponse);

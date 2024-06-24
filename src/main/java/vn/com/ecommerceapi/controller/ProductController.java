@@ -3,8 +3,6 @@ package vn.com.ecommerceapi.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -17,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import vn.com.ecommerceapi.aop.Secured;
 import vn.com.ecommerceapi.enums.RoleEnum;
+import vn.com.ecommerceapi.logging.LoggingFactory;
 import vn.com.ecommerceapi.model.request.CreateProductRequest;
 import vn.com.ecommerceapi.model.response.ProductResponse;
 import vn.com.ecommerceapi.model.response.ProductsResponse;
@@ -27,7 +26,7 @@ import vn.com.ecommerceapi.service.ProductService;
 @RequestMapping("/api")
 public class ProductController {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProductController.class);
+    private static final Logger LOGGER = LoggingFactory.getLogger(ProductController.class);
 
     private final ProductService productService;
 

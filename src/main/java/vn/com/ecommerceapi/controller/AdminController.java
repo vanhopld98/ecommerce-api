@@ -2,7 +2,6 @@ package vn.com.ecommerceapi.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -11,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import vn.com.ecommerceapi.aop.Secured;
 import vn.com.ecommerceapi.enums.RoleEnum;
+import vn.com.ecommerceapi.logging.LoggingFactory;
 import vn.com.ecommerceapi.model.response.UserProfileResponse;
 import vn.com.ecommerceapi.model.response.UserProfilesResponse;
 import vn.com.ecommerceapi.service.AdminService;
@@ -20,7 +20,7 @@ import vn.com.ecommerceapi.service.AdminService;
 @RequestMapping("/api/admin")
 public class AdminController {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AdminController.class);
+    private static final Logger LOGGER = LoggingFactory.getLogger(AdminController.class);
 
     private final AdminService adminService;
 

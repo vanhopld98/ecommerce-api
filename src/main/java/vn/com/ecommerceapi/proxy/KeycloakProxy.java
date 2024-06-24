@@ -4,10 +4,10 @@ import lombok.RequiredArgsConstructor;
 import org.keycloak.adapters.springboot.KeycloakSpringBootProperties;
 import org.keycloak.representations.AccessTokenResponse;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
+import vn.com.ecommerceapi.logging.LoggingFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,7 +16,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class KeycloakProxy extends BaseProxy {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(KeycloakProxy.class);
+    private static final Logger LOGGER = LoggingFactory.getLogger(KeycloakProxy.class);
 
     private static final String REFRESH_TOKEN = "refresh_token";
     private static final String CLIENT_SECRET = "client_secret";

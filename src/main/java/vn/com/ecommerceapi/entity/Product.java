@@ -21,8 +21,13 @@ import java.math.BigDecimal;
 public class Product extends BaseEntity {
 
     private String name;
+
+    @Column(name = "description", columnDefinition = "text")
     private String description;
+
+    @Column(name = "price")
     private BigDecimal price;
+
     private String imageUrl;
 
     @Column(name = "category_id", nullable = false)

@@ -2,16 +2,17 @@ package vn.com.ecommerceapi.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import vn.com.ecommerceapi.entity.Category;
 import vn.com.ecommerceapi.exception.BusinessException;
+import vn.com.ecommerceapi.logging.LoggingFactory;
 import vn.com.ecommerceapi.mapper.CategoriesMapper;
 import vn.com.ecommerceapi.model.request.CreateCategoryRequest;
 import vn.com.ecommerceapi.model.request.UpdateCategoryRequest;
 import vn.com.ecommerceapi.model.response.CategoriesResponse;
 import vn.com.ecommerceapi.model.response.CategoryResponse;
 import vn.com.ecommerceapi.repositories.CategoryRepository;
+import vn.com.ecommerceapi.repositories.ProductRepository;
 import vn.com.ecommerceapi.service.CategoryService;
 import vn.com.ecommerceapi.utils.JWTUtils;
 import vn.com.ecommerceapi.utils.StringUtils;
@@ -22,15 +23,21 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CategoryServiceImpl.class);
+    private static final Logger LOGGER = LoggingFactory.getLogger(CategoryServiceImpl.class);
 
     private final CategoryRepository categoryRepository;
     private final CategoriesMapper categoriesMapper;
+    private final ProductRepository productRepository;
 
     @Override
-    public CategoriesResponse findAll() {
+    public CategoriesResponse findAll(boolean productCount) {
         List<Category> categories = categoryRepository.getAllCategoryActive();
         List<CategoryResponse> categoriesResponses = categories.stream().map(categoriesMapper::mapToCategoryResponse).toList();
+        if (productCount) {
+            for (CategoryResponse categoryResponse : categoriesResponses) {
+                categoryResponse.setProductCount(productRepository.getCountByCategoryId(categoryResponse.getId()));
+            }
+        }
         return CategoriesResponse.builder().categories(categoriesResponses).build();
     }
 

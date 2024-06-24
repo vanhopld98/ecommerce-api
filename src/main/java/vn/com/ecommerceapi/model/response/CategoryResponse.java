@@ -13,4 +13,6 @@ public class CategoryResponse {
     private String name;
     private boolean isActive;
     private String createdAt;
+    private int productCount;
+
 }

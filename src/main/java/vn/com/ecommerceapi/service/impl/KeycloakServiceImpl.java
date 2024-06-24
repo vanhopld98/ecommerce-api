@@ -7,9 +7,9 @@ import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import vn.com.ecommerceapi.constant.Constant;
+import vn.com.ecommerceapi.logging.LoggingFactory;
 import vn.com.ecommerceapi.service.KeycloakService;
 import vn.com.ecommerceapi.utils.StringUtils;
 
@@ -17,7 +17,7 @@ import vn.com.ecommerceapi.utils.StringUtils;
 @RequiredArgsConstructor
 public class KeycloakServiceImpl implements KeycloakService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(KeycloakServiceImpl.class);
+    private static final Logger LOGGER = LoggingFactory.getLogger(KeycloakServiceImpl.class);
 
     private final KeycloakSpringBootProperties keycloakSpringBootProperties;
 

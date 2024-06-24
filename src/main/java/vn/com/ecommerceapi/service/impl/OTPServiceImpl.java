@@ -6,7 +6,6 @@ import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -15,6 +14,7 @@ import vn.com.ecommerceapi.entity.UserProfile;
 import vn.com.ecommerceapi.entity.UserProfileOTP;
 import vn.com.ecommerceapi.enums.OTPTypeEnum;
 import vn.com.ecommerceapi.exception.BusinessException;
+import vn.com.ecommerceapi.logging.LoggingFactory;
 import vn.com.ecommerceapi.model.request.SendOTPRequest;
 import vn.com.ecommerceapi.repositories.UserProfileOTPRepository;
 import vn.com.ecommerceapi.repositories.UserProfileRepository;
@@ -32,7 +32,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class OTPServiceImpl implements OTPService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(OTPServiceImpl.class);
+    private static final Logger LOGGER = LoggingFactory.getLogger(OTPServiceImpl.class);
 
     private static final String CONTENT = "<h2>Mã xác thực đăng ký tại Ecommerce</h2><p>Xin chào: %s,</p><p>Mã OTP của bạn là: <strong>%s</strong></p><p>Vui lòng sử dụng mã OTP này để xác thực đăng ký tài khoản của bạn</p><p>Lưu ý không chia sẻ mã OTP này cho bất kỳ ai.</p><br><p>Trân trọng,</p><p>Ecommerce</p>";
     private static final String SUBJECT = "Mã xác thực đăng ký tài khoản tại Ecommerce";

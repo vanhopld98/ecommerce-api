@@ -2,11 +2,11 @@ package vn.com.ecommerceapi.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import vn.com.ecommerceapi.constant.Constant;
 import vn.com.ecommerceapi.entity.UserProfile;
 import vn.com.ecommerceapi.exception.BusinessException;
+import vn.com.ecommerceapi.logging.LoggingFactory;
 import vn.com.ecommerceapi.mapper.UserProfileMapper;
 import vn.com.ecommerceapi.model.response.UserProfileResponse;
 import vn.com.ecommerceapi.model.response.UserProfilesResponse;
@@ -22,7 +22,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class AdminServiceImpl implements AdminService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AdminServiceImpl.class);
+    private static final Logger LOGGER = LoggingFactory.getLogger(AdminServiceImpl.class);
 
     private final UserProfileRepository userProfileRepository;
     private final UserProfileMapper userProfileMapper;

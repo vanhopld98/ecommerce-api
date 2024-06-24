@@ -2,12 +2,12 @@ package vn.com.ecommerceapi.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import vn.com.ecommerceapi.entity.Category;
 import vn.com.ecommerceapi.entity.ImgurUpload;
 import vn.com.ecommerceapi.entity.Product;
 import vn.com.ecommerceapi.exception.BusinessException;
+import vn.com.ecommerceapi.logging.LoggingFactory;
 import vn.com.ecommerceapi.mapper.CategoriesMapper;
 import vn.com.ecommerceapi.mapper.ProductMapper;
 import vn.com.ecommerceapi.model.proxy.response.ImgurUploadData;
@@ -35,7 +35,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProductServiceImpl.class);
+    private static final Logger LOGGER = LoggingFactory.getLogger(ProductServiceImpl.class);
 
     private final ProductRepository productRepository;
     private final ImgurUploadRepository imgurUploadRepository;
@@ -62,7 +62,18 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public ProductResponse getProduct(String id) {
-        return null;
+        Product product = productRepository.findById(id).orElse(null);
+        if (product == null) {
+            throw new BusinessException("Không tìm thấy sản phẩm");
+        }
+        Category category = categoryRepository.findById(product.getCategoryId()).orElse(null);
+        if (category == null) {
+            throw new BusinessException("Không tìm thấy loại sản phẩm");
+        }
+        ProductResponse productResponse = productMapper.mapToProductResponse(product);
+        CategoryResponse categoryResponse = categoriesMapper.mapToCategoryResponse(category);
+        productResponse.setCategory(categoryResponse);
+        return productResponse;
     }
 
     @Override

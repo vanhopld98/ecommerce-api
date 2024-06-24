@@ -1,8 +1,8 @@
 package vn.com.ecommerceapi.redis;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import vn.com.ecommerceapi.logging.LoggingFactory;
 
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 @SuppressWarnings("unchecked")
 public class TokenRedisService extends RedisService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TokenRedisService.class);
+    private static final Logger LOGGER = LoggingFactory.getLogger(TokenRedisService.class);
 
     private static final String ACCESS_TOKEN_SUB_FIX = "_access_token_customers";
     private static final String REFRESH_TOKEN_SUB_FIX = "_refresh_token_customers";

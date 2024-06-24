@@ -2,10 +2,10 @@ package vn.com.ecommerceapi.proxy;
 
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
+import vn.com.ecommerceapi.logging.LoggingFactory;
 import vn.com.ecommerceapi.model.proxy.response.ImgurUploadResponse;
 
 import java.util.Map;
@@ -14,7 +14,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ImgurProxy extends BaseProxy {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ImgurProxy.class);
+    private static final Logger LOGGER = LoggingFactory.getLogger(ImgurProxy.class);
 
     private static final String CLIENT_ID = "Client-ID %s";
 

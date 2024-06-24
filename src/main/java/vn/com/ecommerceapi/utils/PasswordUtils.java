@@ -1,8 +1,8 @@
 package vn.com.ecommerceapi.utils;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import vn.com.ecommerceapi.logging.LoggingFactory;
 
 import java.security.MessageDigest;
 
@@ -12,7 +12,7 @@ public class PasswordUtils {
     private PasswordUtils() {
     }
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PasswordUtils.class);
+    private static final Logger LOGGER = LoggingFactory.getLogger(PasswordUtils.class);
 
     public static String endCodeMD5(final String s) {
         final var MD5 = "MD5";

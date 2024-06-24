@@ -2,9 +2,9 @@ package vn.com.ecommerceapi.utils;
 
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
+import vn.com.ecommerceapi.logging.LoggingFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,7 +20,7 @@ import java.util.concurrent.Executor;
 @RequiredArgsConstructor
 public class FileUtils {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(FileUtils.class);
+    private static final Logger LOGGER = LoggingFactory.getLogger(FileUtils.class);
 
     private static final String JAVA_IO_TMPDIR = "java.io.tmpdir";
 
